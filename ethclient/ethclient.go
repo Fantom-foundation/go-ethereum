@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/ethereum/go-ethereum/internal/ethapi"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum"
@@ -77,6 +78,210 @@ func (ec *Client) ChainID(ctx context.Context) (*big.Int, error) {
 // if you don't need all transactions or uncle headers.
 func (ec *Client) BlockByHash(ctx context.Context, hash common.Hash) (*types.Block, error) {
 	return ec.getBlock(ctx, "eth_getBlockByHash", hash, true)
+}
+
+
+// GetEventHeader returns the Lachesis event header by hash or short ID.
+func (ec *Client) GetEventHeader(ctx context.Context, shortEventID string) (map[string]interface{}, error) {
+	var result map[string]interface{}
+	err := ec.c.CallContext(ctx, &result, "ftm_getEventHeader", shortEventID)
+	if err != nil {
+		return nil, err
+	}
+	return result, err
+}
+
+// GetEvent returns Lachesis event by hash or short ID.
+func (ec *Client) GetEvent(ctx context.Context, shortEventID string, inclTx bool) (map[string]interface{}, error) {
+	var result map[string]interface{}
+	err := ec.c.CallContext(ctx, &result, "ftm_getEvent", shortEventID, inclTx)
+	if err != nil {
+		return nil, err
+	}
+	return result, err
+}
+
+//
+//// GetConsensusTime returns event's consensus time, if event is confirmed.
+func (ec *Client) GetConsensusTime(ctx context.Context, shortEventID string) (uint64, error) {
+	var result uint64
+	err := ec.c.CallContext(ctx, &result, "ftm_getConsensusTime", shortEventID)
+	if err != nil {
+		return 0, err
+	}
+	return result, err
+}
+
+//// GetHeads returns IDs of all the epoch events with no descendants.
+//// * When epoch is -2 the heads for latest epoch are returned.
+//// * When epoch is -1 the heads for latest sealed epoch are returned.
+func (ec *Client) GetHeads(ctx context.Context, epoch *big.Int) ([]hexutil.Bytes, error) {
+	var result []hexutil.Bytes
+	err := ec.c.CallContext(ctx, &result, "ftm_getHeads", toProperHex(epoch.String()))
+	if err != nil {
+		return nil, err
+	}
+	return result, err
+}
+
+// ChainId retrieves the current chain ID for transaction replay protection.
+func (ec *Client) GetCurrentEpoch(ctx context.Context) (*big.Int, error) {
+	var result hexutil.Big
+	err := ec.c.CallContext(ctx, &result, "ftm_currentEpoch")
+	if err != nil {
+		return nil, err
+	}
+	return (*big.Int)(&result), err
+}
+
+func (ec *Client) GetEpochStats(ctx context.Context, requestedEpoch *big.Int) (map[string]interface{}, error) {
+	var result map[string]interface{}
+	err := ec.c.CallContext(ctx, &result, "ftm_getEpochStats", toProperHex(requestedEpoch.String()))
+	if err != nil {
+		return nil, err
+	}
+	return result, err
+}
+
+// GasPrice returns a suggestion for a gas price.
+func (ec *Client) GasPrice(ctx context.Context) (*hexutil.Big, error) {
+	var result hexutil.Big
+	err := ec.c.CallContext(ctx, &result, "ftm_gasPrice")
+	if err != nil {
+		return nil, err
+	}
+	return &result, err
+}
+
+//
+// ProtocolVersion returns the current Ethereum protocol version this node supports
+func (ec *Client) ProtocolVersion(ctx context.Context) (*hexutil.Uint, error) {
+	var result hexutil.Uint
+	err := ec.c.CallContext(ctx, &result, "ftm_protocolVersion")
+	if err != nil {
+		return nil, err
+	}
+	return &result, err
+}
+
+//
+// Syncing returns true if node is syncing
+func (ec *Client) Syncing(ctx context.Context) (interface{}, error) {
+	var result interface{}
+	err := ec.c.CallContext(ctx, &result, "ftm_syncing")
+	if err != nil {
+		return nil, err
+	}
+	return &result, err
+}
+
+func (ec *Client) GetBlockTPS(ctx context.Context, blockN *big.Int) (*hexutil.Uint, error) {
+	var result hexutil.Uint
+	err := ec.c.CallContext(ctx, &result, "ftm_getBlockTPS", toProperHex(blockN.String()))
+	if err != nil {
+		return nil, err
+	}
+	return &result, err
+}
+
+func (ec *Client) GetEpochTPS(ctx context.Context, blockN *big.Int) (*hexutil.Uint, error) {
+	var result hexutil.Uint
+	err := ec.c.CallContext(ctx, &result, "ftm_getEpochTPS", toProperHex(blockN.String()))
+	if err != nil {
+		return nil, err
+	}
+	return &result, err
+}
+
+// GetTransactionByBlockNumberAndIndex returns the transaction for the given block number and index.
+func (ec *Client) GetTransactionByBlockNumberAndIndex(ctx context.Context, blockNr *big.Int, index hexutil.Uint) (*ethapi.RPCTransaction, error) {
+	var result ethapi.RPCTransaction
+	err := ec.c.CallContext(ctx, &result, "ftm_getTransactionByBlockNumberAndIndex", toProperHex(blockNr.String()), index)
+	if err != nil {
+		return nil, err
+	}
+	return &result, err
+}
+
+// GetTransactionByBlockHashAndIndex returns the transaction for the given block hash and index.
+func (ec *Client) GetTransactionByBlockHashAndIndex(ctx context.Context, blockHash common.Hash, index hexutil.Uint)  (*ethapi.RPCTransaction, error)  {
+	var result ethapi.RPCTransaction
+	err := ec.c.CallContext(ctx, &result, "ftm_getTransactionByBlockHashAndIndex", blockHash, index)
+	if err != nil {
+		return nil, err
+	}
+	return &result, err
+}
+
+// GetTransactionByBlockNumberAndIndex returns the transaction for the given block number and index.
+func (ec *Client) GetRawTransactionByBlockNumberAndIndex(ctx context.Context, blockNr *big.Int, index hexutil.Uint) (hexutil.Bytes, error) {
+	var result hexutil.Bytes
+	err := ec.c.CallContext(ctx, &result, "ftm_getRawTransactionByBlockNumberAndIndex", toProperHex(blockNr.String()), index)
+	if err != nil {
+		return nil, err
+	}
+	return result, err
+}
+
+// GetTransactionByBlockHashAndIndex returns the transaction for the given block hash and index.
+func (ec *Client) GetRawTransactionByBlockHashAndIndex(ctx context.Context, blockHash common.Hash, index hexutil.Uint)  (hexutil.Bytes, error)  {
+	var result hexutil.Bytes
+	err := ec.c.CallContext(ctx, &result, "ftm_getRawTransactionByBlockHashAndIndex", blockHash, index)
+	if err != nil {
+		return nil, err
+	}
+	return result, err
+}
+
+func (ec *Client) GetRawTransactionByHash(ctx context.Context, hash common.Hash) (hexutil.Bytes, error) {
+	var result hexutil.Bytes
+	err := ec.c.CallContext(ctx, &result, "ftm_getRawTransactionByHash", hash)
+	if err != nil {
+		return nil, err
+	}
+	return result, err
+}
+
+func (ec *Client) GetUncleCountByBlockHash(ctx context.Context, blockHash common.Hash) (*hexutil.Uint, error) {
+	var result hexutil.Uint
+	err := ec.c.CallContext(ctx, &result, "ftm_getUncleCountByBlockHash", blockHash)
+	if err != nil {
+		return nil, err
+	}
+	return &result, err
+}
+
+func (ec *Client) GetUncleByBlockHashAndIndex(ctx context.Context, blockHash common.Hash, index hexutil.Uint) (map[string]interface{}, error) {
+	var result map[string]interface{}
+	err := ec.c.CallContext(ctx, &result, "ftm_getUncleByBlockHashAndIndex", blockHash, index)
+	if err != nil {
+		return nil, err
+	}
+	return result, err
+}
+
+
+func (ec *Client) GetUncleByBlockNumberAndIndex(ctx context.Context, blockNr rpc.BlockNumber, index hexutil.Uint) (map[string]interface{}, error) {
+	var result map[string]interface{}
+	err := ec.c.CallContext(ctx, &result, "ftm_getUncleByBlockNumberAndIndex", blockNr, index)
+	if err != nil {
+		return nil, err
+	}
+	return result, err
+}
+
+func (ec *Client) SendTxBatch(ctx context.Context, args []ethapi.SendTxArgs) ([]common.Hash, error) {
+	var result []common.Hash
+	err := ec.c.CallContext(ctx, &result, "ftm_sendTxBatch", args)
+	if err != nil {
+		return nil, err
+	}
+	return result, err
+}
+
+// bignumber casts to hex string without "0x" prefix
+func toProperHex(hex string) string {
+	return "0x" + hex
 }
 
 // BlockByNumber returns a block from the current canonical chain. If number is nil, the
