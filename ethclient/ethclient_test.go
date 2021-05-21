@@ -53,7 +53,6 @@ var (
 )
 
 func TestToFilterArg(t *testing.T) {
-	t.Skip("Skipped due to the custom ethclient without pending block requests")
 	blockHashErr := fmt.Errorf("cannot specify both BlockHash and FromBlock/ToBlock")
 	addresses := []common.Address{
 		common.HexToAddress("0xD36722ADeC3EdCB29c8e7b5a47f352D701393462"),
